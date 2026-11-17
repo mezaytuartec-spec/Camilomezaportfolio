@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #fbfbfd;
+  color: #1d1d1f;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* The hand cursor, everywhere (incl. buttons and links). The hotspot is the
+   fingertip. A 2x version is used on high-density screens. */
+*,
+*::before,
+*::after {
+  /* Each line is a fallback for the one before: a browser that doesn't
+     understand a line simply ignores it. */
+  cursor: url("/cursor.png") 10 1, pointer !important;
+  cursor: -webkit-image-set(url("/cursor.png") 1x, url("/cursor@2x.png") 2x) 10 1, pointer !important;
+  cursor: image-set(url("/cursor.png") 1x, url("/cursor@2x.png") 2x) 10 1, pointer !important;
+}
+
+/* Height of each thumbnail row. */
+.marquee-rows {
+  --row-h: clamp(130px, 19vw, 270px);
+}
+
+/* Entrance: before the intro ends every card is hidden; afterwards each one
+   fades in at its own (scattered) moment, quickly. "backwards" (not "both")
+   so nothing keeps animating — or stays on its own GPU layer — afterwards. */
+.marquee-rows:not(.is-ready) .card-in {
+  opacity: 0;
+}
+
+.is-ready .card-in {
+  animation: card-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header and footer ease in once the intro hands over. */
+.page-fade {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.9s ease-out,
+    transform 0.9s ease-out;
+}
+
+.is-ready .page-fade,
+.page-fade.is-ready {
+  opacity: 1;
+  transform: none;
+}
+
+/* Rows are moved by script (auto-scroll + drag). Horizontal drags belong to
+   the row; vertical swipes still scroll the page on touch screens. */
+.marquee {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.marquee-track {
+  will-change: transform;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pop-in {
+  animation: pop-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: top right;
+}
