@@ -1,13 +1,27 @@
-import { useEffect, useRef, useState } from "react";
-import { GlassIconReveal } from "@/components/ui/liquid-glass-logo-reveal";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+
+// The WebGL glass effect is only downloaded where it is used (see below).
+const GlassIconReveal = lazy(() =>
+  import("@/components/ui/liquid-glass-logo-reveal").then((m) => ({
+    default: m.GlassIconReveal,
+  })),
+);
 
 const BG = "#eeeef0";
-const MAX_WAIT_MS = 7000; // safety net if WebGL is unavailable or the logo fails to load
+const MAX_WAIT_MS = 7000; // safety net if the animation never reports back
+
+// The liquid-glass shader is heavy and rendered a black square on phone GPUs,
+// so touch devices and narrow screens get a lightweight CSS version of the
+// same idea instead (a glass tile, the logo resolving out of a blur).
+const useGlass =
+  typeof window !== "undefined" &&
+  !window.matchMedia("(pointer: coarse)").matches &&
+  window.innerWidth >= 640;
 
 /**
- * Full-screen intro: the logo is revealed through liquid glass, then the
- * overlay dissolves into the site. `onReveal` fires as the dissolve starts
- * (the page begins to appear); `onGone` once the overlay can be removed.
+ * Full-screen intro: the logo is revealed, then the overlay dissolves into
+ * the site. `onReveal` fires as the dissolve starts (the page begins to
+ * appear); `onGone` once the overlay can be removed.
  */
 export function Intro({
   onReveal,
@@ -56,20 +70,38 @@ export function Intro({
         pointerEvents: leaving ? "none" : "auto",
       }}
     >
-      <GlassIconReveal
-        logo="/logo-mark.png"
-        label="Camilo Meza Ytuarte"
-        look="light"
-        background={BG}
-        logoColor="#111113"
-        loop={false}
-        tileSize={300}
-        logoScale={0.72}
-        finalScale={0.72}
-        tuning={{ present: 1.9, glide: 1.8 }}
-        onDone={() => finish(450)}
-        className="pointer-events-none h-full w-full cursor-default"
-      />
+      {useGlass ? (
+        <Suspense fallback={null}>
+          <GlassIconReveal
+            logo="/logo-mark.png"
+            label="Camilo Meza Ytuarte"
+            look="light"
+            background={BG}
+            logoColor="#111113"
+            loop={false}
+            tileSize={300}
+            logoScale={0.72}
+            finalScale={0.72}
+            tuning={{ present: 1.9, glide: 1.8 }}
+            onDone={() => finish(450)}
+            className="pointer-events-none h-full w-full cursor-default"
+          />
+        </Suspense>
+      ) : (
+        <div className="absolute inset-0 grid place-items-center">
+          <div className="intro-tile relative grid size-40 place-items-center rounded-[2.4rem] bg-white/60 shadow-[0_1px_2px_rgba(0,0,0,0.05),0_24px_48px_-16px_rgba(0,0,0,0.18)] ring-1 ring-white">
+            <img
+              src="/logo-mark.png"
+              alt=""
+              width={96}
+              height={96}
+              draggable={false}
+              onAnimationEnd={() => finish(350)}
+              className="intro-logo size-24 select-none"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
